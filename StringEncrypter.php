@@ -65,28 +65,20 @@ class StringEncrypter
         $key         = $this->splitchars($this->key);
         $keyCounter  = 0;
         $codedString = "";
-        $rounds      = 0;
+
 
         for ($x = 0; $x < count($string); $x++){
 
-            $result         = $x + ord($key[$keyCounter]);
-            $primesResult   = $this->calcPrimes($result) + $x + ord($string[$x]);
+            $n         = $x + ord($key[$keyCounter]);
+            $primesResult   = $this->calcPrimes($n) + $x + ord($string[$x]);
 
-            $charCode = 32;
-            for($c = 0; $c < $primesResult; $c++){
-
-                if($charCode > 126){
-                    $charCode = 32;
-                    $rounds++;
-                }
-
-                $charCode++;
+            while($primesResult > 126){
+                $primesResult = $primesResult - 95;
             }
-            $codedString .= $rounds . chr($charCode-1);
-            $rounds = 0;
+
+            $codedString .= chr($primesResult);
 
             $keyCounter++;
-
 
             if($keyCounter > (count($key)-1)){
                 $keyCounter = 0;
@@ -96,7 +88,6 @@ class StringEncrypter
         return $codedString;
 
     }
-
 
 
 
@@ -113,14 +104,18 @@ class StringEncrypter
         $codedString = "";
         $stringPos   = 0;
 
-        for ($x = 0; $x < count($string); $x += 2){
+        for ($x = 0; $x < count($string); $x++){
 
-            $rounds   = $string[$x];
-            $result   = $stringPos + ord($key[$keyCounter]);
-            $total    = 95 * $rounds + (ord($string[$x+1]) - 32 + 1);
-            $charCode = $total - $stringPos - $this->calcPrimes($result);
-       
-            $codedString .= chr($charCode);
+            $n         = $x + ord($key[$keyCounter]);
+            $primesResult   = $this->calcPrimes($n) + $x;
+
+            $originalSum = ord($string[$x]);
+            while($originalSum < ($primesResult + 32)){
+                $originalSum += 95;
+            }
+
+            $charCode = chr($originalSum - $primesResult);
+            $codedString .= $charCode;
 
             $keyCounter++;
 
@@ -128,9 +123,6 @@ class StringEncrypter
                 $keyCounter = 0;
             }
 
-            if($x % 2 == 0){
-                $stringPos++;
-            }
         }
 
         return $codedString;
@@ -151,8 +143,8 @@ fscanf(STDIN, "%[^\n]s", $encryptionKey);
 
 // Encrypts the informed string
 $encryptObj = new StringEncrypter($textToEncrypt, $encryptionKey);
-printf("Encrypted string : " . $encryptObj->encrypt() . "\n");
+echo "Encrypted string : " . $encryptObj->encrypt() . "\n";
 
 // Decrypts the encrypted string
 $decryptObj = new StringEncrypter($encryptObj->encrypt(), $encryptionKey);
-printf("Decrypted string : " . $decryptObj->decrypt() . "\n");
+echo "Decrypted string : " . $decryptObj->decrypt() . "\n";
